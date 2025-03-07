@@ -1,17 +1,17 @@
 package com.app.controllers;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
-import com.app.entites.User;
+import com.app.payloads.LoginDTO;
 import com.app.repositories.UserRepo;
+import com.app.services.AuthService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,11 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.exceptions.UserNotFoundException;
-import com.app.payloads.LoginCredentials;
 import com.app.payloads.UserDTO;
 import com.app.security.JWTUtil;
 import com.app.services.UserService;
-
+import com.app.payloads.LoginResponseDto;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
@@ -44,29 +43,29 @@ public class AuthController {
 
 	private UserRepo userRepo;
 
+	private AuthService authService;
+
 	@PostMapping("/register")
 	public ResponseEntity<UserDTO> registerHandler(@Valid @RequestBody UserDTO user) throws UserNotFoundException {
 
-
-
 		UserDTO userDTO = userService.registerUser(user);
 
-		//String token = jwtUtil.generateToken(userDTO.getEmail());
-
-		return new ResponseEntity<UserDTO>(userDTO,
+		return new ResponseEntity<>(userDTO,
 				HttpStatus.OK);
 	}
 
 	@PostMapping("/login")
-	public Map<String, Object> loginHandler(@Valid @RequestBody LoginCredentials credentials) {
+	public ResponseEntity<LoginResponseDto> loginHandler(@Valid @RequestBody LoginDTO loginDto,HttpServletRequest request,
+											HttpServletResponse response) {
 
-		UsernamePasswordAuthenticationToken authCredentials = new UsernamePasswordAuthenticationToken(
-				credentials.getEmail(), credentials.getPassword());
+		LoginResponseDto loginResponseDto = authService.login(loginDto);
 
-		authenticationManager.authenticate(authCredentials);
+		Cookie cookie = new Cookie("refreshToken", loginResponseDto.getRefreshToken());
+		cookie.setHttpOnly(true);
+		//cookie.setSecure("production".equals(deployEnv));
+		response.addCookie(cookie);
 
-		String token = jwtUtil.generateToken(credentials.getEmail());
-
-		return Collections.singletonMap("jwt-token", token);
+		return new ResponseEntity<>(loginResponseDto,
+		HttpStatus.OK);
 	}
 }

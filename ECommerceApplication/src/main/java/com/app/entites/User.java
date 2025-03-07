@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import com.app.security.PermissionMapping;
-
+import com.app.enums.Role;
 @Entity
 @Table(name = "users")
 @Data

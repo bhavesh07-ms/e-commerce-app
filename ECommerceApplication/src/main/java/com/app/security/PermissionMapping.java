@@ -1,19 +1,24 @@
 package com.app.security;
-import com.example.demo4.SecurityApp.entities.enums.Permission;
-import com.example.demo4.SecurityApp.entities.enums.Role;
+import com.app.enums.Permissions;
+import com.app.enums.Role;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.example.demo4.SecurityApp.entities.enums.Permission.*;
-import static com.example.demo4.SecurityApp.entities.enums.Role.*;
+import static com.app.enums.Permissions.*;
+import static com.app.enums.Role.*;
+
+
 public class PermissionMapping {
-    private static final Map<Role, Set<Permission>> map = Map.of(
-            USER, Set.of(USER_VIEW, POST_VIEW),
-            CREATOR, Set.of(POST_CREATE, USER_UPDATE, POST_UPDATE),
-            ADMIN, Set.of(POST_CREATE, USER_UPDATE, POST_UPDATE, USER_DELETE, USER_CREATE, POST_DELETE)
+    private static final Map<Role, Set<Permissions>> map = Map.of(
+            ADMIN, Set.of(USER_VIEW, USER_CREATE,USER_DELETE,PRODUCT_CREATE,PRODUCT_UPDATE,PRODUCT_DELETE,CART_ADD,ORDER_CREATE,ORDER_VIEW,ORDER_UPDATE,ORDER_CANCEL,DELIVERY_VIEW,DELIVERY_UPDATE),
+            SHOPKEEPER, Set.of(USER_VIEW, USER_CREATE,PRODUCT_CREATE,PRODUCT_UPDATE,PRODUCT_DELETE,ORDER_VIEW,ORDER_UPDATE,DELIVERY_VIEW,GREEN_PATH_VIEW),
+            CUSTOMER, Set.of(USER_VIEW, USER_CREATE, CART_ADD, ORDER_CREATE, ORDER_VIEW, ORDER_CANCEL,DELIVERY_VIEW),
+            DELIVERY_AGENT,Set.of(ORDER_VIEW,ORDER_UPDATE,DELIVERY_VIEW,DELIVERY_UPDATE,GREEN_PATH_VIEW),
+            SUPPORT_AGENT,Set.of(USER_VIEW,ORDER_VIEW,ORDER_UPDATE,ORDER_CANCEL)
     );
 
     public static Set<SimpleGrantedAuthority> getAuthoritiesForRole(Role role) {
@@ -21,4 +26,7 @@ public class PermissionMapping {
                 .map(permission -> new SimpleGrantedAuthority(permission.name()))
                 .collect(Collectors.toSet());
     }
+
+
+
 }

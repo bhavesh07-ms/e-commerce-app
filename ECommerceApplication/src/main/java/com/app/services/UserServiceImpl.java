@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.app.enums.Role;
 import com.app.payloads.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,9 +22,7 @@ import org.springframework.stereotype.Service;
 
 import com.app.config.AppConstants;
 import com.app.entites.Address;
-import com.app.entites.Cart;
 import com.app.entites.CartItem;
-import com.app.entites.Role;
 import com.app.entites.User;
 import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
@@ -52,6 +50,8 @@ public class UserServiceImpl implements UserService {
 	private PasswordEncoder passwordEncoder;
 
 	private ModelMapper modelMapper;
+
+	private SessionService sessionService;
 
 	private JWTService jwtService;
 	@Override
@@ -254,7 +254,7 @@ public class UserServiceImpl implements UserService {
 		String refreshToken = jwtService.generateRefreshToken(user);
 		sessionService.generateNewSession(user, refreshToken);
 
-		return new LoginResponseDto(user.getId(), accessToken, refreshToken);
+		return new LoginResponseDto(user.getUserId(), accessToken, refreshToken);
 	}
 
 }

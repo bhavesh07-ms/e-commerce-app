@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import com.app.config.AppConstants;
-import com.app.entites.Role;
 import com.app.repositories.RoleRepo;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;

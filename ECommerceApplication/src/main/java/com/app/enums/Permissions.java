@@ -1,0 +1,32 @@
+package com.app.enums;
+
+public enum Permissions {
+    USER_VIEW,
+    USER_CREATE,
+    USER_UPDATE,
+    USER_DELETE,
+    USER_LIST,
+
+    PRODUCT_VIEW,
+    PRODUCT_CREATE,
+    PRODUCT_UPDATE,
+    PRODUCT_DELETE,
+    PRODUCT_LIST,
+
+    CART_VIEW,
+    CART_ADD,
+    CART_DELETE,
+    ORDER_CREATE,
+    ORDER_VIEW,
+    ORDER_UPDATE,
+    ORDER_CANCEL,
+
+    PAYMENT_INITIATE,
+    PAYMENT_VERIFY,
+    PAYMENT_REFUND,
+
+    DELIVERY_VIEW,
+    DELIVERY_UPDATE,
+    GREEN_PATH_VIEW
+
+}
