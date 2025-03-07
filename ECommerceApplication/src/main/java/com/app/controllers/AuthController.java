@@ -45,16 +45,16 @@ public class AuthController {
 	private UserRepo userRepo;
 
 	@PostMapping("/register")
-	public ResponseEntity<Map<String, Object>> registerHandler(@Valid @RequestBody UserDTO user) throws UserNotFoundException {
+	public ResponseEntity<UserDTO> registerHandler(@Valid @RequestBody UserDTO user) throws UserNotFoundException {
 
 
 
 		UserDTO userDTO = userService.registerUser(user);
 
-		String token = jwtUtil.generateToken(userDTO.getEmail());
+		//String token = jwtUtil.generateToken(userDTO.getEmail());
 
-		return new ResponseEntity<Map<String, Object>>(Collections.singletonMap("jwt-token", token),
-				HttpStatus.CREATED);
+		return new ResponseEntity<UserDTO>(userDTO,
+				HttpStatus.OK);
 	}
 
 	@PostMapping("/login")

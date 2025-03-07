@@ -1,9 +1,6 @@
 package com.app.entites;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -23,6 +20,9 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.app.security.PermissionMapping;
 
 @Entity
 @Table(name = "users")
@@ -63,5 +63,18 @@ public class User {
 
 	@OneToOne(mappedBy = "user", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
 	private Cart cart;
+
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+		roles.forEach(
+				role -> {
+					Set<SimpleGrantedAuthority> permissions = PermissionMapping.getAuthoritiesForRole(role);
+					authorities.addAll(permissions);
+					authorities.add(new SimpleGrantedAuthority("ROLE_"+role.name()));
+				}
+		);
+		return authorities;
+	}
+
 
 }

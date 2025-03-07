@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.app.payloads.*;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,7 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,11 +28,6 @@ import com.app.entites.Role;
 import com.app.entites.User;
 import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
-import com.app.payloads.AddressDTO;
-import com.app.payloads.CartDTO;
-import com.app.payloads.ProductDTO;
-import com.app.payloads.UserDTO;
-import com.app.payloads.UserResponse;
 import com.app.repositories.AddressRepo;
 import com.app.repositories.RoleRepo;
 import com.app.repositories.UserRepo;
@@ -36,26 +36,24 @@ import jakarta.transaction.Transactional;
 
 @Transactional
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-	@Autowired
+	private final AuthenticationManager authenticationManager;
+
 	private UserRepo userRepo;
 
-	@Autowired
 	private RoleRepo roleRepo;
 
-	@Autowired
 	private AddressRepo addressRepo;
 
-	@Autowired
 	private CartService cartService;
 
-	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	@Autowired
 	private ModelMapper modelMapper;
 
+	private JWTService jwtService;
 	@Override
 	public UserDTO registerUser(UserDTO userDTO) {
 
@@ -70,8 +68,8 @@ public class UserServiceImpl implements UserService {
 		try {
 			User user = modelMapper.map(userDTO, User.class);
 
-			Cart cart = new Cart();
-			user.setCart(cart);
+			/*Cart cart = new Cart();
+			user.setCart(cart);*/
 
 			Role role = roleRepo.findById(AppConstants.USER_ID).get();
 			user.getRoles().add(role);
@@ -96,7 +94,7 @@ public class UserServiceImpl implements UserService {
 
 			User registeredUser = userRepo.save(user);
 
-			cart.setUser(registeredUser);
+			//cart.setUser(registeredUser);
 
 			userDTO = modelMapper.map(registeredUser, UserDTO.class);
 
@@ -244,6 +242,19 @@ public class UserServiceImpl implements UserService {
 		userRepo.delete(user);
 
 		return "User with userId " + userId + " deleted successfully!!!";
+	}
+
+	public LoginResponseDto login(LoginDTO loginDto) {
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
+		);
+
+		User user = (User) authentication.getPrincipal();
+		String accessToken = jwtService.generateAccessToken(user);
+		String refreshToken = jwtService.generateRefreshToken(user);
+		sessionService.generateNewSession(user, refreshToken);
+
+		return new LoginResponseDto(user.getId(), accessToken, refreshToken);
 	}
 
 }
