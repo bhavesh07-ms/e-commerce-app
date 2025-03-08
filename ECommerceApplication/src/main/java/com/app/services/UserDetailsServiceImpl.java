@@ -14,15 +14,22 @@ import com.app.exceptions.ResourceNotFoundException;
 import com.app.repositories.UserRepo;
 
 @Service
+
 public class UserDetailsServiceImpl implements UserDetailsService {
 
 	@Autowired
-	private UserRepo userRepo;
+	private UserRepo userRepository;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Optional<User> user = userRepo.findByEmail(username);
+		Optional<User> user = userRepository.findByEmail(username);
 		
 		return user.map(UserInfoConfig::new).orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
+	}
+
+
+	public User getUserById(Long userId) {
+		return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User with id "+ userId +
+				" not found"));
 	}
 }

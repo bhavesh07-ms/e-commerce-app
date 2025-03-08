@@ -2,29 +2,38 @@ package com.app.security;
 
 import java.io.IOException;
 
+import com.app.services.JWTService;
+import com.app.services.UserDetailsServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.app.entites.User;
 
-import com.app.services.UserDetailsServiceImpl;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Service
+@RequiredArgsConstructor
 public class JWTFilter extends OncePerRequestFilter {
 
-	@Autowired
-	private JWTUtil jwtUtil;
+	private JWTService jwtService;
+
+	private UserDetailsServiceImpl userService;
 
 	@Autowired
-	private UserDetailsServiceImpl userDetailsServiceImpl;
+	@Qualifier("handlerExceptionResolver")
+	private HandlerExceptionResolver handlerExceptionResolver;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -32,27 +41,28 @@ public class JWTFilter extends OncePerRequestFilter {
 
 		String authHeader = request.getHeader("Authorization");
 
-		if (authHeader != null && !authHeader.isBlank() && authHeader.startsWith("Bearer ")) {
-			String jwt = authHeader.substring(7);
-
-			if (jwt == null || jwt.isBlank()) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invlaid JWT token in Bearer Header");
-			} else {
-				try {
-					String email = jwtUtil.validateTokenAndRetrieveSubject(jwt);
-
-					UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(email);
-
-					UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = 
-							new UsernamePasswordAuthenticationToken(email, userDetails.getPassword(), userDetails.getAuthorities());
-
-					if (SecurityContextHolder.getContext().getAuthentication() == null) {
-						SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-					}
-				} catch (JWTVerificationException e) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token");
-				}
+		try {
+			final String requestTokenHeader = request.getHeader("Authorization");
+			if (requestTokenHeader == null || !requestTokenHeader.startsWith("Bearer")) {
+				filterChain.doFilter(request, response);
+				return;
 			}
+
+			String token = requestTokenHeader.split("Bearer ")[1];
+			Long userId = jwtService.getUserIdFromToken(token);
+
+			if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				User user = userService.getUserById(userId);
+				UsernamePasswordAuthenticationToken authenticationToken =
+						new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+				authenticationToken.setDetails(
+						new WebAuthenticationDetailsSource().buildDetails(request)
+				);
+				SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+			}
+			filterChain.doFilter(request, response);
+		} catch (Exception ex) {
+			handlerExceptionResolver.resolveException(request, response, null, ex);
 		}
 		
 		filterChain.doFilter(request, response);

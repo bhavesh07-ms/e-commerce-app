@@ -1,5 +1,6 @@
 package com.app.config;
 
+import com.app.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.app.security.JWTFilter;
-import com.app.services.UserDetailsServiceImpl;
+
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -40,8 +41,10 @@ public class SecurityConfig {
 			.disable()
 			.authorizeHttpRequests()
 			.requestMatchers(AppConstants.PUBLIC_URLS).permitAll()
-			.requestMatchers(AppConstants.USER_URLS).hasAnyAuthority("USER", "ADMIN")
-			.requestMatchers(AppConstants.ADMIN_URLS).hasAuthority("ADMIN")
+			.requestMatchers("/api/products/**").hasAnyRole("SHOPKEEPER", "ADMIN")
+			.requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER","ADMIN","SHOPKEEPER","DELIVERY_AGENT")
+			.requestMatchers("/api/delivery/**").hasRole("DELIVERY_AGENT")
+			.requestMatchers("/api/admin/**").hasRole("ADMIN")
 			.anyRequest()
 			.authenticated()
 			.and()

@@ -36,8 +36,7 @@ public class AuthService {
     public LoginResponseDto refreshToken(String refreshToken) {
         Long userId = jwtService.getUserIdFromToken(refreshToken);
         sessionService.validateSession(refreshToken);
-        User user = userService.getUserById(userId);
-
+        User user = userService.getUserById2(userId);
         String accessToken = jwtService.generateAccessToken(user);
         return new LoginResponseDto(user.getUserId(), accessToken, refreshToken);
     }
